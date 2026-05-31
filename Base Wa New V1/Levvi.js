@@ -115,16 +115,31 @@ const isPremium = (m) => {
 // System executeEval
 const executeEval = async (code, conn, m) => {
     try {
-        let result = await eval(`(async () => {
-            ${code}
-        })()`)
+        let result
 
-        if (typeof result !== 'string')
-            result = util.inspect(result, { depth: 1 })
+        if (code.includes('\n') || code.includes(';')) {
+            result = await eval(`
+                (async (conn, m, require, fs, util) => {
+                    ${code}
+                })(conn, m, require, fs, util)
+            `)
+        } else {
+            result = await eval(`
+                (async (conn, m, require, fs, util) => {
+                    return (${code})
+                })(conn, m, require, fs, util)
+            `)
+        }
 
-        await m.reply(result)
+        if (typeof result !== 'string') {
+            result = util.inspect(result, {
+                depth: 1
+            })
+        }
+
+        m.reply(result || 'undefined')
     } catch (e) {
-        await m.reply(String(e))
+        m.reply(String(e))
     }
 }
 
@@ -224,9 +239,9 @@ module.exports = async (conn, m) => {
         .jpeg({ quality: 80 })
         .toBuffer()
 
-
-       //Case
+       // Self
        if (config.mode === 'self' && !isCreator(m)) return
+       //Case
         switch (command) {
 
         case 'menu': {
