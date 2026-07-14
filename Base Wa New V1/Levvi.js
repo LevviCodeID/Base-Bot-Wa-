@@ -69,7 +69,7 @@ const os = require('os');
 const util = require('util');
 const fs = require('fs');
 const path = require('path');
-const sharp = require('sharp')
+const Jimp = require('jimp');
 const { exec } = require('child_process');
 const { fileTypeFromBuffer } = require('file-type');
 const { writeExif } = require('./lib/StickerMaker.js');
@@ -234,10 +234,13 @@ module.exports = async (conn, m) => {
 
         const { reply } = m;
 
-        const thumb = await sharp('./src/img/menu.jpg')
-        .resize(300, 300)
-        .jpeg({ quality: 80 })
-        .toBuffer()
+        const image = await Jimp.read('./src/img/menu.jpg')
+
+image
+  .scaleToFit(300, 300)
+  .quality(80)
+
+const thumb = await image.getBufferAsync(Jimp.MIME_JPEG)
 
        // Self
        if (config.mode === 'self' && !isCreator(m)) return
